@@ -1,4 +1,3 @@
-#TODO: Search go through all .m3u files in .m3u folder
 import os, os.path
 import shutil
 
@@ -62,6 +61,7 @@ folderIndex = 0
 fName = ""
 lineLower = ''
 print(listOfPlaylists)
+#Go through all .m3u files in .m3u folder
 for item in listOfPlaylists:
 	os.chdir(crdPath)
 	folderIndex += 1
@@ -98,11 +98,37 @@ for item in listOfPlaylists:
 			fName = playerFSnumbers(fileIndex, maxFileCnt)
 			tgtFileName = os.sep + fName + ".mp3"
 			line = line.strip() #strip removes New Line markers \n
+			if line.find("file:///") > - 1: #strip line of file marker within m3u
+				line = line.split("file:///")[-1]
+            #Also replace most commont HTML exclamations
+            line = line.replace("%20", " ")
+            line = line.replace("%21", "!")
+            line = line.replace("%22", '"')
+            line = line.replace("%23", "#")
+            line = line.replace("%24", "$")
+            line = line.replace("%25", "%")
+            line = line.replace("%26", "&")
+            line = line.replace("%27", "'")
+            line = line.replace("%28", "(")
+            line = line.replace("%29", ")")
+            line = line.replace("%2A", "*")
+            line = line.replace("%2B", "+")
+            line = line.replace("%2C", ",")
+            line = line.replace("%2D", "-")
+            line = line.replace("%2E", ".")
+            line = line.replace("%2F", "/")
+            line = line.replace("%3A", ":")
+            line = line.replace("%3B", ";")
+            line = line.replace("%3C", "<")
+            line = line.replace("%3D", "=")
+            line = line.replace("%3E", ">")
+            line = line.replace("%3F", "?")
+	
 			tgtFileName = fName + ".mp3" #new target file name
 			try:
 				shutil.copy2(line, os.path.join(os.sep, tgtFldrPath,  tgtFileName)) #copies & renames file from playlist to target folder
 			except:
-				print("Couldn't copy file\n" + str(line) + " to:\n" + str(tgtFldrPath) + "\nAborting.")
+			        print("Couldn't copy file\n" + str(line) + " to:\n" + str(tgtFldrPath) + "\nAborting.")
 				quit()
 	print("Successfully copied %s files!" % (fileIndex,))
 	input("\n\nPress Return to quit")
