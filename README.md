@@ -4,7 +4,8 @@ Script that takes an .m3u playlist and converts copies its files to a folder, re
 # Background
 Script: 
 The script is written in PYTHON.
-NOTE: I have a compiled version at hand for Win10 x64. So if you wouldn't like to install python, let me know and I'll share the .exe
+NOTE: I have a compiled version at hand for Win10 x64. So if you wouldn't like to install python, let me know and I'll share the .exe...
+
 DFplayer Mini: 
 DFplayer Mini mp3 player module needs a certain file and folder format on its SD-Card in order to be able to correctly index and read files.
 Format is Foldername 01, 02 ... 99
