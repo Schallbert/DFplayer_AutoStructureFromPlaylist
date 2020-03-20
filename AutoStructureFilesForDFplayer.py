@@ -1,5 +1,5 @@
 import os
-from sys import exit
+import sys
 import os.path
 import shutil
 
@@ -49,59 +49,67 @@ def quitWithMessage(messageString):
 print("\
 Starting Conversion script for structuring files for DFplayerMini.\n\
 This script analyzes .m3u playlists and restructures their contents to a format\n\
-readable by the DFmini mp3 module.\n\n")
+readable by the DFmini mp3 module.\n")
 
 # folder names
-plFldrName = "PlayListsM3U"
-crdFldrName = "SDcardFolders"
+PLAYLISTFLDRNAME = "PlayListsM3U"
+CARDFLDRNAME = "SDcardFolders"
 # player's maximum accepted file cnt
-maxFldrCnt = 99
-maxFileCnt = 255
+MAXFLDRCNT = 99
+MAXFILECNT = 255
+M3UFILETYPE = ".m3u"
+M3UFILEMARKER = "file:///"
+MP3FILEMARKER = ".mp3"
 listOfPlaylists = None
 
 # get current working directory
 myPath = os.getcwd()
 # create directories for playlists and target folders
-plPath = os.path.join(os.sep, myPath, plFldrName)
-crdPath = os.path.join(os.sep, myPath, crdFldrName)
+plPath = os.path.join(os.sep, myPath, PLAYLISTFLDRNAME)
+crdPath = os.path.join(os.sep, myPath, CARDFLDRNAME)
 tgtFldrPath = -1
 tgtFileName = -1
 
 print("Hooked to current working directory: %s" % myPath)
 
 # Check for playlist path
-if not os.path.exists(plFldrName):
+if not os.path.exists(PLAYLISTFLDRNAME):
     print("\
 Did not find folder containing m3u playlists.\n\
 Trying to create folder 'PlayListsM3U' for you.")
     try:
-        os.makedirs(plFldrName)
+        os.makedirs(PLAYLISTFLDRNAME)
     except:
         quitWithMessage("Couldn't create folder. Is directory read-only?")
-    quitWithMessage("\
+        quitWithMessage("\
 Playlist folder successfully created: %s\n\
-Please move your playlists to this place before restarting the script." % plFldrName)
+Please move your playlists to this place before restarting the script." % PLAYLISTFLDRNAME)
 else:
     # if Playlist folder exists, print playlists to be evaluated.
-    listOfPlaylists = os.listdir(plFldrName)
-    listOfPlaylists.sort()
-    print("Folder containing playlists found. Will try creating DFplayer folders and files for:")
-    print(listOfPlaylists)
-# input("Press Enter to continue...")
+    listOfPlaylists = os.listdir(PLAYLISTFLDRNAME)
+    for line in listOfPlaylists:
+        if (line.lower()).find(M3UFILETYPE) > -1:
+            listOfPlaylists.sort()
+            print("Folder containing playlists found. Will try creating DFplayer folders and files for:")
+            print(listOfPlaylists)
+        else:
+            msg = "--- ERROR --- PlayListM3U folder contains other file types than .m3u Playlists: %s\n\
+make sure you only place .m3u files here! Aborting." % line
+            quitWithMessage(msg)
 
 # Check for album(folder) path
-if not os.path.exists(crdFldrName):
+if not os.path.exists(CARDFLDRNAME):
     print("\
 Did not find folder containing SD card MP3 folders.\n\
 Trying to create folder 'SDcardFolders' for you.\n \
 You will find the files to transfer to your DFplayerMini's SD card in this folder.")
     try:
-        os.makedirs(crdFldrName)
+        os.makedirs(CARDFLDRNAME)
     except:
-        quitWithMessage("Couldn't create folder. Is directory read-only?")
+        quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
 else:
     # if Playlist folder exists, print playlists to be evaluated.
-    listOfCardFolders = os.listdir(crdFldrName)
+    listOfCardFolders = os.listdir(CARDFLDRNAME)
     print("Folder containing SDcard MP3 folders found. Will modify folder structure based on playlist input.")
     print("Existing folders: " + str(listOfCardFolders))
 
@@ -110,18 +118,17 @@ folderIndex = 0
 fName = ""
 lineLower = ''
 if listOfPlaylists:
-    print("Playlists found: " + str(listOfPlaylists))
     # Go through all .m3u files in .m3u folder
     for item in listOfPlaylists:
         os.chdir(crdPath)
         folderIndex += 1
         # get folderIndexes right according to player's needs
-        fName = playerFSnumbers(folderIndex, maxFldrCnt)
+        fName = playerFSnumbers(folderIndex, MAXFLDRCNT)
         if not os.path.exists(fName):
             try:
                 os.makedirs(fName)
             except:
-                quitWithMessage("Couldn't create folder. Is directory read-only?")
+                quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
         else:
             # folder already exists. Auto-Overwrite.
             print("Folder '%s' exists. Will auto-overwrite contents." % fName)
@@ -135,25 +142,25 @@ if listOfPlaylists:
                 os.rename(str(item), fName + " " + str(item))
                 item = fName + " " + str(item)
             except:
-                quitWithMessage("Couldn't rename playlist " + str(item) + ". Aborting.")
+                quitWithMessage(" --- ERROR --- Couldn't rename playlist " + str(item) + ". Aborting.")
         playlistFile = open(item, "r")
         fileIndex = 0
         for line in playlistFile.readlines():
             lineLower = line.lower()  # convert to lower case to also find .MP3
-            if lineLower.find(".mp3") > -1:  # only list lines that describe MP3 file path
+            if lineLower.find(M3UFILEMARKER) > -1:  # only list lines that describe MP3 file path
                 fileIndex += 1
-                fName = playerFSnumbers(fileIndex, maxFileCnt)
-                tgtFileName = os.sep + fName + ".mp3"
+                fName = playerFSnumbers(fileIndex, MAXFILECNT)
+                tgtFileName = os.sep + fName + MP3FILEMARKER
                 line = line.strip()  # strip removes New Line markers \n
-                if line.find("file:///") > - 1:  # strip line of file marker within m3u
-                    line = line.split("file:///")[-1]
-                    line = replaceSpecialCharactersInPlaylist(line)
-                tgtFileName = fName + ".mp3"  # new target file name
+                line = line.split(M3UFILEMARKER)[-1]
+                line = replaceSpecialCharactersInPlaylist(line)
+                tgtFileName = fName + MP3FILEMARKER  # new target file name
                 try:
                     shutil.copy2(line, os.path.join(os.sep, tgtFldrPath,
                                                     tgtFileName))  # copies & renames file from playlist to tgt folder
                 except:
-                    quitWithMessage("Couldn't copy file\n" + str(line) + " to:\n" + str(tgtFldrPath) + "\nAborting.")
-        quitWithMessage("Successfully copied %s files!" % fileIndex)
+                    quitWithMessage("--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(tgtFldrPath) + "\nAborting.")
+        print("...completed for folder %d of %d: %s with %d files" % (folderIndex, len(listOfPlaylists), item, fileIndex))
+    quitWithMessage("--- SUCCESS --- All actions completed successfully.")
 else:
-    quitWithMessage("No playlists found in folder. Aborting.")
+    quitWithMessage("--- ERROR --- No playlists found in folder. Place .m3u file(s) here, please. Aborting.")
