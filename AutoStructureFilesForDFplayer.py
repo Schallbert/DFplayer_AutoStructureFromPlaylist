@@ -3,7 +3,7 @@ import sys
 import os.path
 import shutil
 
-#Author: L. Preusser "Schallbert"
+#Author: "Schallbert"
 
 # this function pads leading zeros to a number, returning a string.
 def playerFSnumbers(indx, maxCnt):
@@ -38,6 +38,7 @@ def replaceSpecialCharactersInPlaylist(lineOfPlaylist):
     lineOfPlaylist = lineOfPlaylist.replace("%3D", "=")
     lineOfPlaylist = lineOfPlaylist.replace("%3E", ">")
     lineOfPlaylist = lineOfPlaylist.replace("%3F", "?")
+    lineOfPlaylist = lineOfPlaylist.replace("%7E", "~")  
     return lineOfPlaylist
 
 def quitWithMessage(messageString):
