@@ -2,7 +2,7 @@ import os
 import sys
 import os.path
 import shutil
-# urllib should do what you need in replaceSpecialCharactersInPlaylist
+# use urllib to escape special (UTF8) characters in filenames
 from urllib.parse import quote_plus
 
 
