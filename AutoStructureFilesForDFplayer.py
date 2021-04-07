@@ -3,37 +3,9 @@ import sys
 import os.path
 import shutil
 # use urllib to escape special (UTF8) characters in filenames
-from urllib.parse import quote_plus
-
+from urllib.parse import quote
 
 # Author: "Schallbert"
-
-# this function pads leading zeros to a number, returning a string.
-def playerFSnumbers(indx, maxCnt):
-    """This function returns a DFplayerMini-compatible way of numbering
-    files which is 001, 002, ... 255"""
-    if indx > maxCnt:
-        quitWithMessage("Error: player cannot process more than 100 folders")
-    return str(indx).zfill(len(str(maxCnt)))
-
-
-def replaceSpecialCharactersInPlaylist(line_of_playlist):
-    """Make sure .m3u file's special characters are converted
-    Replace most commont UTF8 special characters"""
-    return quote_plus(line_of_playlist)
-
-
-def quitWithMessage(messageString):
-    """Quits script gracefully with message"""
-    print(messageString)
-    input("Press Enter to quit...")
-    sys.exit()
-
-
-print("\
-Starting Conversion script for structuring files for DFplayerMini.\n\
-This script analyzes .m3u playlists and restructures their contents to a format\n\
-readable by the DFmini mp3 module.\n")
 
 # folder names
 PLAYLISTFLDRNAME = "PlayListsM3U"
@@ -43,7 +15,57 @@ MAXFLDRCNT = 99
 MAXFILECNT = 255
 M3UFILETYPE = ".m3u"
 M3UFILEMARKER = "file:///"
+M3UINFOMARKER = "#"
 MP3FILEMARKER = ".mp3"
+
+
+def playerFSnumbers(indx, maxCnt):
+    """Returns a DFplayerMini-compatible way of numbering
+    files which is 001, 002, ... 255"""
+    if indx > maxCnt:
+        quitWithMessage("Error: player cannot process more than 100 folders")
+    return str(indx).zfill(len(str(maxCnt)))
+
+
+def replace_special_chars_in_path(line_of_playlist):
+    """Make sure .m3u file's special characters are converted
+    Replace most common UTF8 special characters"""
+    return quote(line_of_playlist)
+
+
+def quitWithMessage(messageString):
+    """Quits script gracefully with message"""
+    print(messageString)
+    input("Press Enter to quit...")
+    sys.exit()
+
+
+def find_m3u_filemarker(playlist_line):
+    """relevant lines do not begin with # (sharp)
+       relevant lines may begin with file:/// which has to be stripped"""
+
+    if playlist_line.find(M3UINFOMARKER) == 0:
+        return None
+
+    if playlist_line.find(M3UFILEMARKER):
+        # remove file marker
+        playlist_line = playlist_line.split(M3UFILEMARKER)[-1]
+    # condition line for usage
+    playlist_line = playlist_line.strip()  # strip removes New Line markers \n
+    playlist_line = replace_special_chars_in_path(playlist_line)
+    return playlist_line
+
+
+def get_target_file_name(index):
+    name = playerFSnumbers(index, MAXFILECNT)
+    return os.sep + name + MP3FILEMARKER
+
+
+print("\
+Starting Conversion script for structuring files for DFplayerMini.\n\
+This script analyzes .m3u playlists and restructures their contents to a format\n\
+readable by the DFmini mp3 module.\n")
+
 listOfPlaylists = None
 
 # get current working directory
@@ -99,54 +121,51 @@ else:
 
 # create folders with correct naming to contain mp3 files
 folderIndex = 0
-fName = ""
-lineLower = ''
+tgt_folder_name = ""
+line_lower = ''
 if listOfPlaylists:
     # Go through all .m3u files in .m3u folder
     for item in listOfPlaylists:
         os.chdir(crdPath)
         folderIndex += 1
         # get folderIndexes right according to player's needs
-        fName = playerFSnumbers(folderIndex, MAXFLDRCNT)
-        if not os.path.exists(fName):
+        tgt_folder_name = playerFSnumbers(folderIndex, MAXFLDRCNT)
+        if not os.path.exists(tgt_folder_name):
             try:
-                os.makedirs(fName)
+                os.makedirs(tgt_folder_name)
             except:
                 quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
         else:
             # folder already exists. Auto-Overwrite.
-            print("Folder '%s' exists. Will auto-overwrite contents." % fName)
+            print("Folder '%s' exists. Will auto-overwrite contents." % tgt_folder_name)
         # go through all playlists in folder
-        tgtFldrPath = os.path.join(os.sep, crdPath, fName)
+        tgtFldrPath = os.path.join(os.sep, crdPath, tgt_folder_name)
         os.chdir(plPath)
         # playlist open and show
-        if item.find(str(fName), 0,
+        if item.find(str(tgt_folder_name), 0,
                      4) == -1:  # tries to find out if playlist has  been used already, returns -1 if no duplicates
             try:
-                os.rename(str(item), fName + " " + str(item))
-                item = fName + " " + str(item)
+                os.rename(str(item), tgt_folder_name + " " + str(item))
+                item = tgt_folder_name + " " + str(item)
             except:
                 quitWithMessage(" --- ERROR --- Couldn't rename playlist " + str(item) + ". Aborting.")
         playlistFile = open(item, "r")
-        fileIndex = 0
+        file_index = 0
         for line in playlistFile.readlines():
-            lineLower = line.lower()  # convert to lower case to also find .MP3
-            if lineLower.find(M3UFILEMARKER) > -1:  # only list lines that describe MP3 file path
-                fileIndex += 1
-                fName = playerFSnumbers(fileIndex, MAXFILECNT)
-                tgtFileName = os.sep + fName + MP3FILEMARKER
-                line = line.strip()  # strip removes New Line markers \n
-                line = line.split(M3UFILEMARKER)[-1]
-                line = replaceSpecialCharactersInPlaylist(line)
-                tgtFileName = fName + MP3FILEMARKER  # new target file name
+            line = find_m3u_filemarker(line.lower())
+            if line is not None:
+                file_index += 1
+                tgt_file_name = get_target_file_name(file_index)
+                # copies & renames file from playlist to tgt folder
                 try:
-                    shutil.copy2(line, os.path.join(os.sep, tgtFldrPath,
-                                                    tgtFileName))  # copies & renames file from playlist to tgt folder
+                    shutil.copy2(line, os.path.join(os.sep, tgtFldrPath, tgt_file_name))
                 except:
                     quitWithMessage(
-                        "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(tgtFldrPath) + "\nAborting.")
+                        "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
+                            tgtFldrPath) + "\nAborting.")
         print(
-            "...completed for folder %d of %d: %s with %d files" % (folderIndex, len(listOfPlaylists), item, fileIndex))
+            "...completed for folder %d of %d: %s with %d files" % (
+                folderIndex, len(listOfPlaylists), item, file_index))
     quitWithMessage("--- SUCCESS --- All actions completed successfully.")
 else:
     quitWithMessage("--- ERROR --- No playlists found in folder. Place .m3u file(s) here, please. Aborting.")
