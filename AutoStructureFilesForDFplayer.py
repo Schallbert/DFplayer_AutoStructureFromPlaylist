@@ -94,14 +94,13 @@ else:
     # if Playlist folder exists, print playlists to be evaluated.
     listOfPlaylists = os.listdir(PLAYLISTFLDRNAME)
     for line in listOfPlaylists:
-        if (line.lower()).find(M3UFILETYPE) > -1:
-            listOfPlaylists.sort()
-            print("Folder containing playlists found. Will try creating DFplayer folders and files for:")
-            print(listOfPlaylists)
-        else:
+        if (line.lower()).find(M3UFILETYPE) == -1:
             msg = "--- ERROR --- PlayListM3U folder contains other file types than .m3u Playlists: %s\n\
 make sure you only place .m3u files here! Aborting." % line
             quitWithMessage(msg)
+    listOfPlaylists.sort()
+    print("Folder containing playlists found. Will try creating DFplayer folders and files for:")
+    print(listOfPlaylists)
 
 # Check for album(folder) path
 if not os.path.exists(CARDFLDRNAME):
@@ -157,12 +156,12 @@ if listOfPlaylists:
                 file_index += 1
                 tgt_file_name = get_target_file_name(file_index)
                 # copies & renames file from playlist to tgt folder
-                try:
-                    shutil.copy2(line, os.path.join(os.sep, tgtFldrPath, tgt_file_name))
-                except:
-                    quitWithMessage(
-                        "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
-                            tgtFldrPath) + "\nAborting.")
+                #try:
+                shutil.copy2(line, os.path.join(os.sep, tgtFldrPath, tgt_file_name))
+                #except:
+                #    quitWithMessage(
+                #        "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
+                 #           tgtFldrPath) + "\nAborting.")
         print(
             "...completed for folder %d of %d: %s with %d files" % (
                 folderIndex, len(listOfPlaylists), item, file_index))
