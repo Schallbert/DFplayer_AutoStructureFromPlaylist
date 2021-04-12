@@ -3,7 +3,7 @@ import sys
 import os.path
 import shutil
 # use urllib to escape special (UTF8) characters in filenames
-from urllib.parse import quote
+from urllib.parse import unquote
 
 # Author: "Schallbert"
 
@@ -30,7 +30,7 @@ def playerFSnumbers(indx, maxCnt):
 def replace_special_chars_in_path(line_of_playlist):
     """Make sure .m3u file's special characters are converted
     Replace most common UTF8 special characters"""
-    return quote(line_of_playlist)
+    return unquote(line_of_playlist)
 
 
 def quitWithMessage(messageString):
@@ -66,15 +66,12 @@ Starting Conversion script for structuring files for DFplayerMini.\n\
 This script analyzes .m3u playlists and restructures their contents to a format\n\
 readable by the DFmini mp3 module.\n")
 
-listOfPlaylists = None
-
 # get current working directory
 myPath = os.getcwd()
 # create directories for playlists and target folders
 plPath = os.path.join(os.sep, myPath, PLAYLISTFLDRNAME)
 crdPath = os.path.join(os.sep, myPath, CARDFLDRNAME)
-tgtFldrPath = -1
-tgtFileName = -1
+listOfPlaylists = None
 
 print("Hooked to current working directory: %s" % myPath)
 
@@ -103,68 +100,65 @@ make sure you only place .m3u files here! Aborting." % line
     print(listOfPlaylists)
 
 # Check for album(folder) path
-if not os.path.exists(CARDFLDRNAME):
-    print("\
-Did not find folder containing SD card MP3 folders.\n\
-Trying to create folder 'SDcardFolders' for you.\n \
-You will find the files to transfer to your DFplayerMini's SD card in this folder.")
-    try:
-        os.makedirs(CARDFLDRNAME)
-    except:
-        quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
-else:
+if os.path.exists(CARDFLDRNAME):
     # if Playlist folder exists, print playlists to be evaluated.
     listOfCardFolders = os.listdir(CARDFLDRNAME)
     print("Folder containing SDcard MP3 folders found. Will modify folder structure based on playlist input.")
     print("Existing folders: " + str(listOfCardFolders))
+else:
+    print("\
+    Did not find folder containing SD card MP3 folders.\n\
+    Trying to create folder 'SDcardFolders' for you.\n \
+    You will find the files to transfer to your DFplayerMini's SD card in this folder.")
+    try:
+        os.makedirs(CARDFLDRNAME)
+    except:
+        quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
 
+if not listOfPlaylists:
+    quitWithMessage("--- ERROR --- No playlists found in folder. Place .m3u file(s) here, please. Aborting.")
 # create folders with correct naming to contain mp3 files
 folderIndex = 0
-tgt_folder_name = ""
+target_folder_name = ""
 line_lower = ''
-if listOfPlaylists:
-    # Go through all .m3u files in .m3u folder
-    for item in listOfPlaylists:
-        os.chdir(crdPath)
-        folderIndex += 1
-        # get folderIndexes right according to player's needs
-        tgt_folder_name = playerFSnumbers(folderIndex, MAXFLDRCNT)
-        if not os.path.exists(tgt_folder_name):
+# Go through all .m3u files in .m3u folder
+for playlist in listOfPlaylists:
+    folderIndex += 1
+    # get folderIndexes right according to player's needs
+    target_folder_name = playerFSnumbers(folderIndex, MAXFLDRCNT)
+    target_folder_path = os.sep.join([crdPath, target_folder_name])
+    if os.path.exists(target_folder_name):
+        print("Folder '%s' already exists. Will auto-overwrite contents." % target_folder_name)
+    else:
+        try:
+            os.makedirs(target_folder_path)
+        except:
+            quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
+    # playlist open and show
+    # try to find out if playlist has been renamed already, returns -1 if not
+    if playlist.find(target_folder_name, 0, 2) == -1:
+        try:
+            # rename playlists to match folder numbers
+            new_name = [target_folder_name, "_", playlist]
+            os.rename(os.sep.join([plPath, playlist], os.sep.join([plPath, new_name])))
+            playlist = new_name
+        except:
+            quitWithMessage(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
+    playlistFile = open(os.sep.join([plPath, playlist]), "r")
+    file_index = 0
+    for line in playlistFile.readlines():
+        line = find_m3u_filemarker(line.lower())
+        if line is not None:
+            file_index += 1
+            target_file_name = get_target_file_name(file_index)
+            # copies file from playlist to tgt folder
             try:
-                os.makedirs(tgt_folder_name)
+                shutil.copy2(line, os.sep.join([target_folder_path, target_file_name]))
             except:
-                quitWithMessage("--- ERROR --- Couldn't create folder. Is directory read-only?")
-        else:
-            # folder already exists. Auto-Overwrite.
-            print("Folder '%s' exists. Will auto-overwrite contents." % tgt_folder_name)
-        # go through all playlists in folder
-        tgtFldrPath = os.path.join(os.sep, crdPath, tgt_folder_name)
-        os.chdir(plPath)
-        # playlist open and show
-        if item.find(str(tgt_folder_name), 0,
-                     4) == -1:  # tries to find out if playlist has  been used already, returns -1 if no duplicates
-            try:
-                os.rename(str(item), tgt_folder_name + " " + str(item))
-                item = tgt_folder_name + " " + str(item)
-            except:
-                quitWithMessage(" --- ERROR --- Couldn't rename playlist " + str(item) + ". Aborting.")
-        playlistFile = open(item, "r")
-        file_index = 0
-        for line in playlistFile.readlines():
-            line = find_m3u_filemarker(line.lower())
-            if line is not None:
-                file_index += 1
-                tgt_file_name = get_target_file_name(file_index)
-                # copies & renames file from playlist to tgt folder
-                #try:
-                shutil.copy2(line, os.path.join(os.sep, tgtFldrPath, tgt_file_name))
-                #except:
-                #    quitWithMessage(
-                #        "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
-                 #           tgtFldrPath) + "\nAborting.")
-        print(
-            "...completed for folder %d of %d: %s with %d files" % (
-                folderIndex, len(listOfPlaylists), item, file_index))
-    quitWithMessage("--- SUCCESS --- All actions completed successfully.")
-else:
-    quitWithMessage("--- ERROR --- No playlists found in folder. Place .m3u file(s) here, please. Aborting.")
+                quitWithMessage(
+                    "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
+                        target_folder_path) + "\nAborting.")
+    print(
+        "...completed for folder %d of %d: %s with %d files" % (
+            folderIndex, len(listOfPlaylists), playlist, file_index))
+quitWithMessage("--- SUCCESS --- All actions completed successfully.")
