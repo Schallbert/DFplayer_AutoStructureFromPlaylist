@@ -15,7 +15,6 @@ def execute_target(tmp_path):
     os.system(TARGET)
 
 
-# executest the script "Software Under Test"
 @pytest.fixture
 def copy_target_to_temp(tmp_path):
     """places SUT in temporary path to prepare for execution"""
@@ -53,6 +52,7 @@ def test_creates_playlist_folder(tmp_path, copy_target_to_temp):
 
 
 def test_creates_sdcard_folder(tmp_path, copy_target_to_temp):
+    execute_target(tmp_path) # creates playlist folder, then terminates
     execute_target(tmp_path)
     d = tmp_path / SDCARDFOLDER
     assert d.exists()
