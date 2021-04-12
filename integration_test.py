@@ -1,4 +1,3 @@
-
 import os
 import shutil
 import pytest
@@ -25,6 +24,8 @@ def copy_target_to_temp(tmp_path):
 
 @pytest.fixture
 def execute_happy_path(tmp_path, copy_target_to_temp):
+    """Executes script under test, then copies test files into SUT folder structure.
+    Finally, executes SUT again to get the file operations done."""
     execute_target(tmp_path)
     copy_dummy_content_to_temp(tmp_path)
     execute_target(tmp_path)
@@ -85,10 +86,22 @@ def test_creates_files_from_dummy(tmp_path, execute_happy_path):
     d = p / '03'
     assert len(os.listdir(d)) == 7
 
-# def test_creates_correct_filenames(tmp_path):
-#   execute_happy_path(tmp_path)
-#  for w in range(1, 4):
-#     p = tmp_path / SDCARDFOLDER / ('0' + str(w))
-#    for x in range(1, 8):
-#       d = p / ('00' + str(x))
-#      assert d.exists()
+
+def test_creates_correct_filenames(tmp_path, execute_happy_path):
+    # 3 test playlists
+    for w in range(1, 4):
+        path = tmp_path / SDCARDFOLDER / ('0' + str(w))
+        # 7 tracks per test playlist
+        for x in range(1, 8):
+            filename = '00' + str(x) + '.mp3'
+            print(filename)
+            file = path / filename
+            assert file.exists()
+
+
+def test_renames_playlists_align_folder_numbers(tmp_path, execute_happy_path):
+    playlists = os.listdir(PLAYLISTFOLDER)
+    playlist_number = 0
+    for playlist in playlists:
+        playlist_number = playlist_number + 1
+        assert playlist.find(str(playlist_number), 0, 2) != -1
