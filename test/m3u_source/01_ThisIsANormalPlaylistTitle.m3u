@@ -1,15 +1,15 @@
 #EXTM3U
 #EXTINF:0,eins.mp3
-../mp3_source/eins.mp3
+mp3_source/eins.mp3
 #EXTINF:0,zwei.mp3
-../mp3_source/zwei.mp3
+mp3_source/zwei.mp3
 #EXTINF:0,drei.mp3
-../mp3_source/drei.mp3
+mp3_source/drei.mp3
 #EXTINF:0,vier.mp3
-../mp3_source/vier.mp3
+mp3_source/vier.mp3
 #EXTINF:0,fünf.mp3
-../mp3_source/f%C3%BCnf.mp3
+mp3_source/f%C3%BCnf.mp3
 #EXTINF:0,six barre d'esplacement âccénts.mp3
-../mp3_source/six%20barre%20d'esplacement%20%C3%A2cc%C3%A9nts.mp3
+mp3_source/six%20barre%20d'esplacement%20%C3%A2cc%C3%A9nts.mp3
 #EXTINF:0,seven~strange$characters&;@
-../mp3_source/seven~strange$characters&;@%E2%82%AC%23.mp3
+mp3_source/seven~strange$characters&;@%E2%82%AC%23.mp3
