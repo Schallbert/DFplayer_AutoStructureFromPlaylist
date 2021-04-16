@@ -80,8 +80,8 @@ def create_folder(name):
         quit_with_message("Couldn't create folder %s. Is directory read-only?" % name)
 
 
-def copy_mp3_to_target(playlist_path):
-    _playlist_file = open(playlist_path, "r")
+def copy_mp3_to_target(pl_path):
+    _playlist_file = open(pl_path, "r")
     file_index = 0
     for line in _playlist_file.readlines():
         line = find_m3u_filemarker(line.lower())
@@ -99,6 +99,17 @@ def copy_mp3_to_target(playlist_path):
           folder_index, len(list_of_playlists), playlist, file_index))
 
 
+def add_playlist_prefix(pl, pl_path, pl_prefix):
+    if pl.find(pl_prefix, 0, 2) == -1:
+        try:
+            # rename playlists to match folder numbers
+            new_name = [pl_prefix, "_", pl]
+            os.rename(os.sep.join([pl_path, pl], os.sep.join([pl, new_name])))
+        except:
+            quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
+    return pl
+
+
 print("Starting Conversion application for structuring files for DFplayerMini.\n\
 This script analyzes .m3u playlists and restructures their contents to a format readable by the DFmini mp3 module.\n")
 
@@ -108,6 +119,16 @@ playlist_path = os.path.join(os.sep, current_path, PLAYLISTFLDRNAME)
 sd_card_path = os.path.join(os.sep, current_path, CARDFLDRNAME)
 
 print("Hooked to current working directory: %s" % current_path)
+
+# Handle SD card output folder
+if os.path.exists(CARDFLDRNAME):
+    print("SDcard MP3 folders found. Will modify contents based on playlist input.\n\
+    Existing folders: %s\n" % str(os.listdir(CARDFLDRNAME)))
+else:
+    print("Did not find folder containing SD card MP3 folders.\n\
+    Trying to create folder %s for you.\n\
+    You will find the files to transfer to your DFplayerMini's SD card there" % CARDFLDRNAME)
+    create_folder(CARDFLDRNAME)
 
 # Handle playlist folder
 list_of_playlists = None
@@ -119,16 +140,6 @@ else:
     quit_with_message("\
             SUCCESS: Created folder %s\n\
             Please move your playlists here and run the application again." % PLAYLISTFLDRNAME)
-
-# Handle SD card output folder
-if os.path.exists(CARDFLDRNAME):
-    print("SDcard MP3 folders found. Will modify contents based on playlist input.\n\
-    Existing folders: %s\n" % str(os.listdir(CARDFLDRNAME)))
-else:
-    print("Did not find folder containing SD card MP3 folders.\n\
-    Trying to create folder %s for you.\n\
-    You will find the files to transfer to your DFplayerMini's SD card there" % CARDFLDRNAME)
-    create_folder(CARDFLDRNAME)
 
 if not list_of_playlists:
     quit_with_message("--- ERROR --- No playlists found in %s.\n\
@@ -147,13 +158,6 @@ for playlist in list_of_playlists:
         create_folder(target_folder_path)
     # playlist open and show
     # try to find out if playlist has been renamed already, returns -1 if not
-    if playlist.find(target_folder_name, 0, 2) == -1:
-        try:
-            # rename playlists to match folder numbers
-            new_name = [target_folder_name, "_", playlist]
-            os.rename(os.sep.join([playlist_path, playlist], os.sep.join([playlist_path, new_name])))
-            playlist = new_name
-        except:
-            quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
-    copy_mp3_to_target(os.path.join([playlist_path, playlist]))
+    playlist = add_playlist_prefix(playlist, playlist_path, target_folder_name)
+    copy_mp3_to_target(os.sep.join([playlist_path, playlist]))
 quit_with_message("--- SUCCESS --- All actions completed successfully.")
