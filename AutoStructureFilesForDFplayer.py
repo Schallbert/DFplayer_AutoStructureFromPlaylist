@@ -1,4 +1,3 @@
-import os
 import sys
 import os.path
 import shutil
@@ -77,7 +76,7 @@ def create_folder(path):
     """uses Operating System's function to create a directory. Politely exits if not successful."""
     try:
         os.makedirs(path)
-    except:
+    except OSError:
         quit_with_message("Couldn't create folder %s. Is directory read-only?" % path)
 
 
@@ -93,7 +92,7 @@ def copy_mp3_to_target(pl_full_path, tgt_full_path):
             # copies file from playlist to tgt folder
             try:
                 shutil.copy2(line, os.sep.join([tgt_full_path, target_file_name]))
-            except:
+            except OSError:
                 quit_with_message(
                     "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
                         target_full_path) + "\nAborting.")
@@ -108,7 +107,7 @@ def add_playlist_prefix(pl, pl_path, pl_prefix):
             # rename playlists to match folder numbers
             new_name = [pl_prefix, "_", pl]
             os.rename(os.sep.join([pl_path, pl], os.sep.join([pl, new_name])))
-        except:
+        except OSError:
             quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
     return pl
 
