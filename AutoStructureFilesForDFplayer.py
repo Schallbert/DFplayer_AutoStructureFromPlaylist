@@ -80,19 +80,37 @@ def create_folder(name):
         quit_with_message("Couldn't create folder %s. Is directory read-only?" % name)
 
 
+def copy_mp3_to_target(playlist_path):
+    _playlist_file = open(playlist_path, "r")
+    file_index = 0
+    for line in _playlist_file.readlines():
+        line = find_m3u_filemarker(line.lower())
+        if line is not None:
+            file_index += 1
+            target_file_name = get_target_file_name(file_index)
+            # copies file from playlist to tgt folder
+            try:
+                shutil.copy2(line, os.sep.join([target_folder_path, target_file_name]))
+            except:
+                quit_with_message(
+                    "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
+                        target_folder_path) + "\nAborting.")
+    print("...completed for folder %d of %d: %s with %d files" % (
+          folder_index, len(list_of_playlists), playlist, file_index))
+
+
 print("Starting Conversion application for structuring files for DFplayerMini.\n\
 This script analyzes .m3u playlists and restructures their contents to a format readable by the DFmini mp3 module.\n")
 
-# get current working directory
-myPath = os.getcwd()
-# create directories for playlists and target folders
-plPath = os.path.join(os.sep, myPath, PLAYLISTFLDRNAME)
-crdPath = os.path.join(os.sep, myPath, CARDFLDRNAME)
-list_of_playlists = None
+# Directory operations: Create required paths
+current_path = os.getcwd()
+playlist_path = os.path.join(os.sep, current_path, PLAYLISTFLDRNAME)
+sd_card_path = os.path.join(os.sep, current_path, CARDFLDRNAME)
 
-print("Hooked to current working directory: %s" % myPath)
+print("Hooked to current working directory: %s" % current_path)
 
 # Handle playlist folder
+list_of_playlists = None
 if os.path.exists(PLAYLISTFLDRNAME):
     list_of_playlists = compile_list_of_playlists()
 else:
@@ -112,20 +130,17 @@ else:
     You will find the files to transfer to your DFplayerMini's SD card there" % CARDFLDRNAME)
     create_folder(CARDFLDRNAME)
 
-
 if not list_of_playlists:
     quit_with_message("--- ERROR --- No playlists found in %s.\n\
     Place .m3u file(s) here, please. Aborting." % PLAYLISTFLDRNAME)
 # create folders with correct naming to contain mp3 files
-folderIndex = 0
-target_folder_name = ""
-line_lower = ''
+folder_index = 0
 # Go through all .m3u files in .m3u folder
 for playlist in list_of_playlists:
-    folderIndex += 1
+    folder_index += 1
     # get folderIndexes right according to player's needs
-    target_folder_name = get_name_from_id(folderIndex, MAXFLDRCNT)
-    target_folder_path = os.sep.join([crdPath, target_folder_name])
+    target_folder_name = get_name_from_id(folder_index, MAXFLDRCNT)
+    target_folder_path = os.sep.join([sd_card_path, target_folder_name])
     if os.path.exists(target_folder_name):
         print("Output Folder '%s' already exists. Will auto-overwrite contents." % target_folder_name)
     else:
@@ -136,25 +151,9 @@ for playlist in list_of_playlists:
         try:
             # rename playlists to match folder numbers
             new_name = [target_folder_name, "_", playlist]
-            os.rename(os.sep.join([plPath, playlist], os.sep.join([plPath, new_name])))
+            os.rename(os.sep.join([playlist_path, playlist], os.sep.join([playlist_path, new_name])))
             playlist = new_name
         except:
             quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
-    playlistFile = open(os.sep.join([plPath, playlist]), "r")
-    file_index = 0
-    for line in playlistFile.readlines():
-        line = find_m3u_filemarker(line.lower())
-        if line is not None:
-            file_index += 1
-            target_file_name = get_target_file_name(file_index)
-            # copies file from playlist to tgt folder
-            try:
-                shutil.copy2(line, os.sep.join([target_folder_path, target_file_name]))
-            except:
-                quit_with_message(
-                    "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
-                        target_folder_path) + "\nAborting.")
-    print(
-        "...completed for folder %d of %d: %s with %d files" % (
-            folderIndex, len(list_of_playlists), playlist, file_index))
+    copy_mp3_to_target(os.path.join([playlist_path, playlist]))
 quit_with_message("--- SUCCESS --- All actions completed successfully.")
