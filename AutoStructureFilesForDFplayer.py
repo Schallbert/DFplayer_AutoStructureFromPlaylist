@@ -25,13 +25,6 @@ def replace_special_chars_in_path(line_of_playlist):
     return unquote(line_of_playlist)
 
 
-def quit_with_message(message):
-    """Quits script gracefully with message"""
-    print(message)
-    input("Press Enter to quit...\n")
-    sys.exit()
-
-
 def find_m3u_filemarker(playlist_line):
     """relevant lines do not begin with # (sharp)
        relevant lines may begin with file:/// which has to be stripped"""
@@ -73,15 +66,24 @@ def compile_list_of_playlists():
     return _list_of_playlists
 
 
-def create_folder(name):
+def quit_with_message(message):
+    """Quits script gracefully with message"""
+    print(message)
+    input("Press Enter to quit...\n")
+    sys.exit()
+
+
+def create_folder(path):
+    """uses Operating System's function to create a directory. Politely exits if not successful."""
     try:
-        os.makedirs(name)
+        os.makedirs(path)
     except:
-        quit_with_message("Couldn't create folder %s. Is directory read-only?" % name)
+        quit_with_message("Couldn't create folder %s. Is directory read-only?" % path)
 
 
-def copy_mp3_to_target(pl_path):
-    _playlist_file = open(pl_path, "r")
+def copy_mp3_to_target(pl_full_path, tgt_full_path):
+    """Copies all files indicated by playlist file to target_full_path."""
+    _playlist_file = open(pl_full_path, "r")
     file_index = 0
     for line in _playlist_file.readlines():
         line = find_m3u_filemarker(line.lower())
@@ -90,16 +92,17 @@ def copy_mp3_to_target(pl_path):
             target_file_name = get_target_file_name(file_index)
             # copies file from playlist to tgt folder
             try:
-                shutil.copy2(line, os.sep.join([target_folder_path, target_file_name]))
+                shutil.copy2(line, os.sep.join([tgt_full_path, target_file_name]))
             except:
                 quit_with_message(
                     "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
-                        target_folder_path) + "\nAborting.")
+                        target_full_path) + "\nAborting.")
     print("...completed for folder %d of %d: %s with %d files" % (
           folder_index, len(list_of_playlists), playlist, file_index))
 
 
 def add_playlist_prefix(pl, pl_path, pl_prefix):
+    """Renames a playlist file to indicate which target folder it links to"""
     if pl.find(pl_prefix, 0, 2) == -1:
         try:
             # rename playlists to match folder numbers
@@ -151,13 +154,13 @@ for playlist in list_of_playlists:
     folder_index += 1
     # get folderIndexes right according to player's needs
     target_folder_name = get_name_from_id(folder_index, MAXFLDRCNT)
-    target_folder_path = os.sep.join([sd_card_path, target_folder_name])
-    if os.path.exists(target_folder_name):
-        print("Output Folder '%s' already exists. Will auto-overwrite contents." % target_folder_name)
+    target_full_path = os.sep.join([sd_card_path, target_folder_name])
+    if os.path.exists(target_full_path):
+        print("Target directory exists %s. Will auto-overwrite contents!" % target_folder_name)
     else:
-        create_folder(target_folder_path)
+        create_folder(target_full_path)
     # playlist open and show
     # try to find out if playlist has been renamed already, returns -1 if not
     playlist = add_playlist_prefix(playlist, playlist_path, target_folder_name)
-    copy_mp3_to_target(os.sep.join([playlist_path, playlist]))
+    copy_mp3_to_target(os.sep.join([playlist_path, playlist]), target_full_path)
 quit_with_message("--- SUCCESS --- All actions completed successfully.")
