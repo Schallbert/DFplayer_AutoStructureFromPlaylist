@@ -22,6 +22,8 @@ def execute_target(tmp_path):
 @pytest.fixture
 def copy_target_to_temp(tmp_path):
     """places SUT in temporary path to prepare for execution"""
+    os.chmod(TARGET, stat.S_IREAD)
+    os.chmod(TARGET, stat.S_IEXEC)
     shutil.copy2(TARGET, os.sep.join([str(tmp_path), TARGET]))
 
 
