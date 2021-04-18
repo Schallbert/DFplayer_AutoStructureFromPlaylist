@@ -43,7 +43,7 @@ def get_name_from_id(indx, max_cnt):
     """Returns a DFplayerMini-compatible way of numbering
     files which is 001, 002, ... 255"""
     if indx > max_cnt:
-        quit_with_message("Error: player cannot process more than %s items" % max_cnt)
+        quit_with_message("Error: player cannot process more than %s items" % max_cnt, 1)
     return str(indx).zfill(len(str(max_cnt)))
 
 
@@ -59,17 +59,20 @@ def compile_list_of_playlists():
         if (_playlist.lower()).find(M3UFILETYPE) == -1:
             msg = "--- ERROR --- PlayListM3U folder contains unsupported file types:  %s\n\
     make sure you only place .m3u files here! Aborting." % _playlist
-            quit_with_message(msg)
+            quit_with_message(msg, 1)
     _list_of_playlists.sort()
     print("Folder with playlists found. Trying to create DFplayer folders and files for: %s" % _list_of_playlists)
     return _list_of_playlists
 
 
-def quit_with_message(message):
+def quit_with_message(message, exit_code):
     """Quits script gracefully with message"""
     print(message)
-    input("Press Enter to quit...\n")
-    sys.exit()
+    try:
+        input("Press Return to quit...\n")
+    except EOFError:
+        print("No input given.")
+    sys.exit(exit_code)
 
 
 def create_folder(path):
@@ -77,7 +80,7 @@ def create_folder(path):
     try:
         os.makedirs(path)
     except OSError:
-        quit_with_message("Couldn't create folder %s. Is directory read-only?" % path)
+        quit_with_message("Couldn't create folder %s. Is directory read-only?" % path, 1)
 
 
 def copy_mp3_to_target(pl_full_path, tgt_full_path):
@@ -95,7 +98,7 @@ def copy_mp3_to_target(pl_full_path, tgt_full_path):
             except OSError:
                 quit_with_message(
                     "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(
-                        target_full_path) + "\nAborting.")
+                        target_full_path) + "\nAborting.", 1)
     print("...completed for folder %d of %d: %s with %d files" % (
           folder_index, len(list_of_playlists), playlist, file_index))
 
@@ -108,7 +111,7 @@ def add_playlist_prefix(pl, pl_path, pl_prefix):
             new_name = [pl_prefix, "_", pl]
             os.rename(os.sep.join([pl_path, pl], os.sep.join([pl, new_name])))
         except OSError:
-            quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.")
+            quit_with_message(" --- ERROR --- Couldn't rename playlist " + str(playlist) + ". Aborting.", 1)
     return pl
 
 
@@ -141,11 +144,11 @@ else:
     create_folder(PLAYLISTFLDRNAME)
     quit_with_message("\
             SUCCESS: Created folder %s\n\
-            Please move your playlists here and run the application again." % PLAYLISTFLDRNAME)
+            Please move your playlists here and run the application again." % PLAYLISTFLDRNAME, 0)
 
 if not list_of_playlists:
     quit_with_message("--- ERROR --- No playlists found in %s.\n\
-    Place .m3u file(s) here, please. Aborting." % PLAYLISTFLDRNAME)
+    Place .m3u file(s) here, please. Aborting." % PLAYLISTFLDRNAME, 1)
 # create folders with correct naming to contain mp3 files
 folder_index = 0
 # Go through all .m3u files in .m3u folder
@@ -162,4 +165,4 @@ for playlist in list_of_playlists:
     # try to find out if playlist has been renamed already, returns -1 if not
     playlist = add_playlist_prefix(playlist, playlist_path, target_folder_name)
     copy_mp3_to_target(os.sep.join([playlist_path, playlist]), target_full_path)
-quit_with_message("--- SUCCESS --- All actions completed successfully.")
+quit_with_message("--- SUCCESS --- All actions completed successfully.", 0)
