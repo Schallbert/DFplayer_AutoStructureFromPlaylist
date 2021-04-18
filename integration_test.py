@@ -15,14 +15,13 @@ DUMMYCONTENT = os.sep.join([ROOTDIR, TESTFOLDER, 'mp3_source'])
 
 def execute_target(tmp_path):
     os.chdir(tmp_path)
-    os.chmod(TARGET, stat.S_IEXEC)
     return os.system(TARGET)
 
 
 @pytest.fixture
 def copy_target_to_temp(tmp_path):
     """places SUT in temporary path to prepare for execution"""
-    os.chmod(TARGET, stat.S_IRWXO)
+    os.chmod(TARGET, 755)
     shutil.copy2(TARGET, os.sep.join([str(tmp_path), TARGET]))
 
 
