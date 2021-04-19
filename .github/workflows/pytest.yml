@@ -36,6 +36,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        chmod 755 ../AutoStructureFilesForDFplayer.py
-        chmod 744 ../test
+        chmod 755 AutoStructureFilesForDFplayer.py
         pytest
