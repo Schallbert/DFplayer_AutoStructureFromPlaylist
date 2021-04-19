@@ -94,7 +94,7 @@ def copy_mp3_to_target(pl_full_path, tgt_full_path):
             target_file_name = get_target_file_name(file_index)
             # copies file from playlist to tgt folder
             try:
-                shutil.copy2(line, os.sep.join([tgt_full_path, target_file_name]))
+                shutil.copyfile(line, os.sep.join([tgt_full_path, target_file_name]))
             except OSError:
                 quit_with_message(
                     "--- ERROR --- Couldn't copy file\n" + str(line) + " to:\n" + str(

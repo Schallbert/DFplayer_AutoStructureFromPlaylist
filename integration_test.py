@@ -15,6 +15,7 @@ DUMMYCONTENT = os.sep.join([ROOTDIR, TESTFOLDER, 'mp3_source'])
 
 def execute_target(tmp_path):
     os.chdir(tmp_path)
+    os.chmod(TARGET, 755)
     return os.system(TARGET)
 
 
@@ -33,12 +34,14 @@ def execute_happy_path(tmp_path, copy_target_to_temp):
 
 
 def copy_dummy_content_to_temp(tmp_path):
-    """after execute_target is run, this function copies the dummy contents to the playlists and executes again"""
+    """after execute_target is run, this function copies the dummy contents to the playlists"""
     # Copy dummy m3u playlists
+    target_playlist_path = os.sep.join([str(tmp_path), PLAYLISTFOLDER])
+    target_content_path = os.sep.join([str(tmp_path), 'mp3_source'])
     for file in os.listdir(DUMMYPLAYLISTS):
-        shutil.copyfile(os.sep.join([DUMMYPLAYLISTS, file]), os.sep.join([str(tmp_path), PLAYLISTFOLDER]))
+        shutil.copyfile(os.sep.join([DUMMYPLAYLISTS, file]), os.sep.join([target_playlist_path, file]))
     # Copy dummy mp3 content
-    shutil.copytree(DUMMYCONTENT, os.sep.join([str(tmp_path), 'mp3_source']))
+    shutil.copytree(DUMMYCONTENT, target_content_path)
 
 
 def test_can_copy_to_temp(tmp_path, copy_target_to_temp):
