@@ -21,8 +21,7 @@ def execute_target(tmp_path):
 @pytest.fixture
 def copy_target_to_temp(tmp_path):
     """places SUT in temporary path to prepare for execution"""
-    os.chmod(TARGET, 755)
-    shutil.copy2(TARGET, os.sep.join([str(tmp_path), TARGET]))
+    shutil.copyfile(TARGET, os.sep.join([str(tmp_path), TARGET]))
 
 
 @pytest.fixture
@@ -37,7 +36,7 @@ def copy_dummy_content_to_temp(tmp_path):
     """after execute_target is run, this function copies the dummy contents to the playlists and executes again"""
     # Copy dummy m3u playlists
     for file in os.listdir(DUMMYPLAYLISTS):
-        shutil.copy(os.sep.join([DUMMYPLAYLISTS, file]), os.sep.join([str(tmp_path), PLAYLISTFOLDER]))
+        shutil.copyfile(os.sep.join([DUMMYPLAYLISTS, file]), os.sep.join([str(tmp_path), PLAYLISTFOLDER]))
     # Copy dummy mp3 content
     shutil.copytree(DUMMYCONTENT, os.sep.join([str(tmp_path), 'mp3_source']))
 
