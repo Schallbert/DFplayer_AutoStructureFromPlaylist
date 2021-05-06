@@ -15,7 +15,6 @@ DUMMYCONTENT = os.sep.join([ROOTDIR, TESTFOLDER, 'mp3_source'])
 
 def execute_target(tmp_path):
     os.chdir(tmp_path)
-    os.chmod(tmp_path, 777)
     return os.system(TARGET)
 
 

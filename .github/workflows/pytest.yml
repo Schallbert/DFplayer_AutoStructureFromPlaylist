@@ -36,5 +36,5 @@ jobs:
         flake8 . --count --exit-zero --max-complexity=10 --max-line-length=127 --statistics
     - name: Test with pytest
       run: |
-        chmod 777 AutoStructureFilesForDFplayer.py #make executable by pytest user
-        pytest
+        # override default temp directory path for pytest to become independent of executing environment
+        pytest --basetemp=output_test
