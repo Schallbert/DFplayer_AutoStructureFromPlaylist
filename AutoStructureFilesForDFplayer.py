@@ -27,7 +27,7 @@ def replace_special_chars_in_path(line_of_playlist):
 def find_m3u_filemarker(playlist_line):
     """relevant lines do not begin with # (sharp)
        relevant lines may begin with file:/// which has to be stripped"""
-    if playlist_line.find(M3UINFOMARKER) == -1:
+    if playlist_line.find(M3UINFOMARKER) > -1:
         return None
 
     if playlist_line.find(M3UFILEMARKER) > -1:

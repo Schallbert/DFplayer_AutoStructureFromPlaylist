@@ -1,6 +1,5 @@
 import shutil
 import os
-import stat
 import pytest
 
 ROOTDIR = os.getcwd()
