@@ -26,7 +26,7 @@ To mitigate manual renaming, this script has been developed.
 # How to use the script
 1. Place the script (or the executable) in the folder you'd like the script's output to appear in, e.g. 
 "Music/DFplayerFiles"
-2. Run the script once. It will create the input folder "PlayListsM3U" and end with 
+2. Run the script once. It will create the input folder "PlayListsM3U" and finish with 
 a message that it didn't find any files to modify.
 3. Create playlists with the songs you'd like to listen to on DFplayer mini and place them in "PlayListsM3U". 
 It makes sense to rename them according to the order in which you'd like the output folders to be created,
@@ -37,5 +37,5 @@ e.g. "01_Audiobook Story Of My life"
 # Rough description of what it does
 The script will create two folders (in the folder it is placed itself):
 "PlayListsM3U" which you put your playlists in to be converted (input for script)
-"SDcardFolders" which contains the script's output (numbered folders accoring to the playlist count and copied plus renamed MP3 files)
+"SDcardFolders" which contains the script's output (numbered folders according to the playlist count and copied plus renamed MP3 files)
 The script iterates through all playlist files within PlayListsM3U and will create folders accordingly, copying the playlist's linked files into this folder, and renaming it according to the playlist's track number following DFplayer's file/folder format.
